@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>春夏秋冬配對王</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:18px;font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;color:#344054;background:linear-gradient(135deg,#fff5e9,#e9f8ff)}
+h1{text-align:center;color:#ed7c58;font-size:clamp(27px,4vw,38px);margin:8px 0}
+.subtitle{text-align:center;font-size:17px;line-height:1.6;margin:0 auto 16px;max-width:760px}
+.game{max-width:1200px;margin:auto}
+.status{text-align:center;font-size:19px;font-weight:bold;margin:12px}
+.columns{display:grid;grid-template-columns:minmax(240px,.85fr) minmax(0,1.65fr);gap:18px}
+.panel{background:#ffffffed;padding:16px;border-radius:22px;border:2px solid #f6dca2;box-shadow:0 5px 16px #34405412}
+.panel h2{text-align:center;color:#8a583a;font-size:22px;margin:2px 0 14px}
+.season-list{display:grid;gap:12px}
+.season{padding:8px;border:3px solid #eadfcf;border-radius:16px;background:#fffdf8;cursor:pointer;text-align:center;font-size:20px;font-weight:800;transition:.18s}
+.season:hover,.season.selected{border-color:#56b879;background:#edfff1;transform:translateY(-1px)}
+.season img{display:block;width:100%;height:130px;object-fit:cover;border-radius:10px;margin-bottom:6px}
+.clue-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.clue{padding:8px;border:2px dashed #8bd5e8;border-radius:14px;background:#fff;cursor:pointer;text-align:center;font-size:16px;line-height:1.45;transition:.18s}
+.clue:hover{background:#f1fbff;border-color:#299cc2}
+.clue img{width:100%;height:94px;object-fit:cover;border-radius:9px;display:block;margin-bottom:7px}
+.clue.correct{background:#e6f9e9;border:2px solid #48ae6a;cursor:default}
+.clue.wrong{background:#fff0ef;border-color:#f17870}
+.feedback{text-align:center;min-height:32px;margin:18px 0 10px;font-size:19px;font-weight:bold}
+button{display:block;margin:12px auto;padding:12px 28px;border:0;border-radius:28px;background:#9360d9;color:white;font-size:18px;font-weight:bold;cursor:pointer}
+button:hover{background:#7845c1}
+.note{text-align:center;font-size:13px;color:#667085;margin-top:10px}
+@media(max-width:760px){body{padding:10px}.columns{grid-template-columns:1fr}.season-list{grid-template-columns:repeat(2,minmax(0,1fr))}.season img{height:105px}.clue-list{grid-template-columns:repeat(2,minmax(0,1fr))}.clue img{height:100px}}
+@media(max-width:420px){.clue-list{grid-template-columns:1fr 1fr}.clue{font-size:14px}.clue img{height:82px}}
+</style>
+</head>
+<body>
+<div class="game">
+  <h1>春夏秋冬配對王</h1>
+  <p class="subtitle">先選擇左邊的季節，再點選右邊相關的圖片和文字描述。完成 12 題，成為四季配對王！</p>
+  <div class="status">已完成：<span id="completed">0</span> / 12</div>
+  <div class="columns">
+    <section class="panel">
+      <h2>四季圖像</h2>
+      <div class="season-list" id="seasonList"></div>
+    </section>
+    <section class="panel">
+      <h2>圖片及文字描述</h2>
+      <div class="clue-list" id="clueList"></div>
+    </section>
+  </div>
+  <div class="feedback" id="feedback" aria-live="polite">請選擇一個季節，開始配對吧！</div>
+  <button type="button" onclick="restartGame()">重新開始</button>
+  <p class="note">圖片已隨附於 images 資料夾，離線亦可遊玩。請勿單獨移動 HTML 檔案，否則圖片可能無法顯示。</p>
+</div>
+<script>
+const seasons = [
+  {id:"spring",name:"春天",image:"images/spring.jpg"},
+  {id:"summer",name:"夏天",image:"images/summer.jpg"},
+  {id:"autumn",name:"秋天",image:"images/autumn.jpg"},
+  {id:"winter",name:"冬天",image:"images/winter.jpg"}
+];
+const clues = [
+  {season:"spring",image:"images/clue01.jpg",text:"百花盛開，樹木長出嫩綠的新葉。"},
+  {season:"spring",image:"images/clue02.jpg",text:"蝴蝶在花叢中飛舞。"},
+  {season:"spring",image:"images/clue03.jpg",text:"天氣開始回暖，有時會下春雨。"},
+  {season:"summer",image:"images/clue04.jpg",text:"天氣炎熱，陽光猛烈。"},
+  {season:"summer",image:"images/clue05.jpg",text:"可以吃西瓜和雪糕消暑。"},
+  {season:"summer",image:"images/clue06.jpg",text:"人們會去游泳池游泳。"},
+  {season:"autumn",image:"images/clue07.jpg",text:"樹葉逐漸變黃、變紅，然後飄落。"},
+  {season:"autumn",image:"images/clue08.jpg",text:"中秋節時，人們會賞月、吃月餅。"},
+  {season:"autumn",image:"images/clue09.jpg",text:"天氣開始轉涼，秋高氣爽。"},
+  {season:"winter",image:"images/clue10.jpg",text:"天氣寒冷，需要穿上厚外套。"},
+  {season:"winter",image:"images/clue11.jpg",text:"有些地方會下雪，可以堆雪人。"},
+  {season:"winter",image:"images/clue12.jpg",text:"人們會戴冷帽、圍巾和手套保暖。"}
+];
+let selectedSeason=null, completed=0;
+const matchedClues=new Set();
+function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
+function renderSeasons(){
+ const box=document.getElementById("seasonList");box.innerHTML="";
+ seasons.forEach(s=>{
+  const card=document.createElement("button");
+  card.type="button";card.className="season";card.style.color="inherit";
+  card.innerHTML=`<img src="${s.image}" alt="${s.name}風景"><span>${s.name}</span>`;
+  card.addEventListener("click",()=>{
+   selectedSeason=s.id;
+   document.querySelectorAll(".season").forEach(el=>el.classList.remove("selected"));
+   card.classList.add("selected");
+   document.getElementById("feedback").textContent=`你選擇了${s.name}，請找出相關描述！`;
+  });
+  box.appendChild(card);
+ });
+}
+function renderClues(){
+ const box=document.getElementById("clueList");box.innerHTML="";
+ shuffle(clues).forEach(clue=>{
+  const card=document.createElement("div");card.className="clue";
+  card.innerHTML=`<img src="${clue.image}" alt="季節提示圖片"><span>${clue.text}</span>`;
+  card.addEventListener("click",()=>{
+   if(matchedClues.has(clue.image))return;
+   if(!selectedSeason){document.getElementById("feedback").textContent="請先選擇左邊的一個季節！";return}
+   if(selectedSeason===clue.season){
+    card.classList.add("correct");matchedClues.add(clue.image);completed++;
+    document.getElementById("completed").textContent=completed;
+    document.getElementById("feedback").textContent=`答對了！這是${seasons.find(s=>s.id===selectedSeason).name}的特色！`;
+    if(completed===clues.length)document.getElementById("feedback").textContent="太棒了！你已成為春夏秋冬配對王！";
+   }else{
+    card.classList.add("wrong");document.getElementById("feedback").textContent="再想一想！這個描述屬於哪個季節呢？";
+    setTimeout(()=>card.classList.remove("wrong"),650);
+   }
+  });
+  box.appendChild(card);
+ });
+}
+function restartGame(){selectedSeason=null;completed=0;matchedClues.clear();document.getElementById("completed").textContent="0";document.getElementById("feedback").textContent="請選擇一個季節，開始配對吧！";renderSeasons();renderClues()}
+restartGame();
+</script>
+</body>
+</html>
